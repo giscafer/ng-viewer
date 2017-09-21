@@ -12,7 +12,7 @@ import {
     OnChanges,
     OnDestroy,
     SimpleChange,
-    EventEmitter, OnInit, NgModule, SimpleChanges, Renderer2, AfterViewInit
+    EventEmitter, OnInit, NgModule, SimpleChanges, Renderer2, AfterViewInit, ContentChild
 } from "@angular/core";
 import { Http } from "@angular/http";
 import { CommonModule } from "@angular/common";
@@ -23,9 +23,10 @@ declare var Viewer;
 @Directive({
     selector: '[viewer]'
 })
-export class ViewerDirective implements AfterViewInit, OnDestroy {
+export class ViewerDirective implements OnInit, OnDestroy {
     @Input()
     originalAttr: string = "data-original";
+    @ContentChild('content') content: ElementRef;
 
     viewer: any;
     nativeElement: HTMLElement;
@@ -35,15 +36,27 @@ export class ViewerDirective implements AfterViewInit, OnDestroy {
         this.nativeElement = this._elementRef.nativeElement;
 
     }
-    ngAfterViewInit(): void {
-        this.nativeElement.onload=()=>{
-            this.viewer = new Viewer(this.nativeElement, {
-                url: this.originalAttr,
-            });
+    
+    ngOnInit() {
+        let nativeEl = this.nativeElement;
+        if (this.content) {
+            nativeEl = this.content.nativeElement;
         }
+        setTimeout(() => {
+            let imgs = nativeEl.getElementsByTagName('img');
+            if (imgs.length) {
+                imgs[0].onload = () => {
+                    this.viewer = new Viewer(this.nativeElement, {
+                        url: this.originalAttr,
+                    });
+                }
+            }
+        });
     }
 
     ngOnDestroy(): void {
-        this.viewer.destroy();
+        if (this.viewer) {
+            this.viewer.destroy();
+        }
     }
 }
