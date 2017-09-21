@@ -12,7 +12,7 @@ import {
     OnChanges,
     OnDestroy,
     SimpleChange,
-    EventEmitter, OnInit, NgModule, SimpleChanges, Renderer2
+    EventEmitter, OnInit, NgModule, SimpleChanges, Renderer2, AfterViewInit
 } from "@angular/core";
 import { Http } from "@angular/http";
 import { CommonModule } from "@angular/common";
@@ -23,7 +23,7 @@ declare var Viewer;
 @Directive({
     selector: '[viewer]'
 })
-export class ViewerDirective implements OnInit, OnChanges, OnDestroy {
+export class ViewerDirective implements AfterViewInit, OnDestroy {
     @Input()
     originalAttr: string = "data-original";
 
@@ -35,18 +35,15 @@ export class ViewerDirective implements OnInit, OnChanges, OnDestroy {
         this.nativeElement = this._elementRef.nativeElement;
 
     }
-    ngOnInit(): void {
-        console.log(this.nativeElement);
-        this.viewer = new Viewer(this.nativeElement, {
-            url: this.originalAttr,
-        });
+    ngAfterViewInit(): void {
+        this.nativeElement.onload=()=>{
+            this.viewer = new Viewer(this.nativeElement, {
+                url: this.originalAttr,
+            });
+        }
     }
-    ngOnChanges(changes: SimpleChanges): void {
-        this.viewer.destroy();
-    }
-
-
 
     ngOnDestroy(): void {
+        this.viewer.destroy();
     }
 }
