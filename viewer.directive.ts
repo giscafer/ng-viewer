@@ -6,18 +6,15 @@ import {
   ContentChild,
   ContentChildren,
   Directive,
-  ElementRef,
+  ElementRef, HostListener,
   Input,
   NgModule,
-  OnDestroy,
-  OnInit,
-  Renderer2
+  Renderer2,
+  NgZone
 } from "@angular/core";
-import {CommonModule} from "@angular/common";
+import { CommonModule } from "@angular/common";
 
-declare var Viewer;
-
-
+/* 动态获取接口异步返回的图片*/
 @Directive({
   selector: '[viewer-content]',
 })
@@ -32,25 +29,25 @@ export class ViewerContentDirective {
 }
 
 @Directive({
-  selector: '[viewer]'
+  selector: '[yzt-viewer]'
 })
-export class ViewerDirective implements OnInit, OnDestroy {
-  @Input()
-  originalAttr: string = "name";
+export class YZTViewerDirective {
+
+  @Input() originalAttr: string = "name";
+
   @ContentChild('content') content: ElementRef;
 
   @ContentChildren(ViewerContentDirective)
   set _imgContents(value) {
     this.imgContents = value;
-    this.renderContent(true);
+    this.renderContent();
   }
 
   viewer: any;
   imgContents;
   nativeElement: HTMLElement;
 
-  constructor(private _elementRef: ElementRef,
-              private _render: Renderer2) {
+  constructor(private _elementRef: ElementRef, private ngZone: NgZone) {
     this.nativeElement = this._elementRef.nativeElement;
 
   }
@@ -61,37 +58,35 @@ export class ViewerDirective implements OnInit, OnDestroy {
 
   /**
    * 如果img动态增加，则动态渲染
-   * @param {boolean} flag 是否动态增加渲染
    */
-  renderContent(flag?: boolean) {
+  renderContent() {
     let nativeEl = this.nativeElement;
     if (this.content) {
       nativeEl = this.content.nativeElement;
     }
-    setTimeout(() => {
-      let imgs = nativeEl.getElementsByTagName('img');
+    let imgs = nativeEl.getElementsByTagName('img');
+    this.ngZone.runOutsideAngular(() => {
       if (imgs.length) {
         if (this.viewer) {
           this.viewer.destroy();
         }
-        // if (!flag) {
-        //   imgs[0].onload = () => {
-        //     this.viewer = new Viewer(this.nativeElement, {
-        //       url: this.originalAttr,
-        //     });
-        //   }
-        // } else {
-        //   imgs[imgs.length-1].onload = () => {
-        //     this.viewer = new Viewer(this.nativeElement, {
-        //       url: this.originalAttr,
-        //     });
-        //   }
-        // }
         this.viewer = new Viewer(this.nativeElement, {
           url: this.originalAttr,
         });
+        this.viewer.play();
       }
-    },500);
+    });
+    // setTimeout(() => {
+    //   let imgs = nativeEl.getElementsByTagName('img');
+    //   if (imgs.length) {
+    //     if (this.viewer) {
+    //       this.viewer.destroy();
+    //     }
+    //     this.viewer = new Viewer(this.nativeElement, {
+    //       url: this.originalAttr,
+    //     });
+    //   }
+    // }, 500);
   }
 
   ngOnDestroy(): void {
@@ -103,12 +98,12 @@ export class ViewerDirective implements OnInit, OnDestroy {
 
 @NgModule({
   declarations: [
-    ViewerDirective, ViewerContentDirective
+    YZTViewerDirective, ViewerContentDirective
   ],
-  exports: [ViewerDirective, ViewerContentDirective],
+  exports: [YZTViewerDirective, ViewerContentDirective],
   imports: [
     CommonModule
   ]
 })
-export class ViewerDirectiveModule {
+export class YZTViewerDirectiveModule {
 }
